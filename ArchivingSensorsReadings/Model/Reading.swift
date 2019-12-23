@@ -47,14 +47,15 @@ class Reading: NSObject, NSCoding{
         coder.encode(self.value, forKey: "value")
     }
     
-    func printReading() {
+    func printReading() -> String {
         // print("Reading reading:")
-        self.sensor.printSensor()
+        var text: String = ""
+        text = self.sensor.printSensor()
         let dateFormatter = DateFormatter()
         dateFormatter.dateStyle = .full
         dateFormatter.timeStyle = .full
         print("Reading: \(self.value), " + dateFormatter.string(from: self.date))
-        
+        return text + ", Reading: \(self.value), " + dateFormatter.string(from: self.date) + "\n"
     }
     
 }

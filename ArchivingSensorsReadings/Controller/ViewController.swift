@@ -21,26 +21,58 @@ class ViewController: UIViewController {
     
     // readings
     var maxValue: Float = 100.0
-    var readingsNumber: Int = 15
+    var readingsNumber: Int = 50000
     var readings: [Reading] = []
     var archivedReadings: [Reading] = []
     
+    @IBOutlet weak var textDisplay: UITextView!
+    
+    @IBOutlet weak var timeLabel: UILabel!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
         setUpArchiving()
         
-        generateSensorsAndReadings()
-        
+    }
+    
+    
+    @IBAction func onGenerateData(_ sender: Any) {
+        let startTime = NSDate()
+        self.generateSensorsAndReadings()
         saveSensors(sensors: self.sensors)
-        
-        readSensors()
-        
         saveReadings(readings: self.readings)
-        
-        readReadings()
-        
+        let finishTime = NSDate()
+        let measuredTime = finishTime.timeIntervalSince(startTime as Date)
+        timeLabel.text = "Generated in " + String(measuredTime) + " s"
+        // print(measuredTime)
+    }
+    
+    @IBAction func onFindMinMaxTimestamp(_ sender: Any) {
+        let startTime = NSDate()
+        self.findMinAndMaxTimestamp()
+        let finishTime = NSDate()
+        let measuredTime = finishTime.timeIntervalSince(startTime as Date)
+        timeLabel.text = "Found min and max in " + String(measuredTime) + " s"
+        // print(measuredTime)
+    }
+    
+    
+    @IBAction func onCalculateAvarage(_ sender: Any) {
+        let startTime = NSDate()
+        self.findAvarageValue()
+        let finishTime = NSDate()
+        let measuredTime = finishTime.timeIntervalSince(startTime as Date)
+        timeLabel.text = "Found avarage in " + String(measuredTime) + " s"
+    }
+    
+    
+    @IBAction func onCalculateForEach(_ sender: Any) {
+        let startTime = NSDate()
+        self.findAvarageAndCountForEach()
+        let finishTime = NSDate()
+        let measuredTime = finishTime.timeIntervalSince(startTime as Date)
+        timeLabel.text = "Found for each in " + String(measuredTime) + " s"
     }
     
     
@@ -61,8 +93,11 @@ class ViewController: UIViewController {
         
     }
     
-    // generate sensors
+    // generate sensors and readings
     func generateSensorsAndReadings(){
+        
+        var text: String = "Sample generated data: \n"
+        
         let baseName: String = "S0"
         for i in 0...self.sensorsNumber-1 {
             let currentSensorName = baseName + String(i)
@@ -72,7 +107,7 @@ class ViewController: UIViewController {
         
         // print sensors for debugging
         for s in self.sensors {
-            s.printSensor()
+            text = text + s.printSensor()
         }
         
         for _ in 0 ... self.readingsNumber-1 {
@@ -93,9 +128,10 @@ class ViewController: UIViewController {
        
         // print first ten readings for debugging...
         for r in 0 ... 10 {
-            readings[r].printReading()
+            text = text + readings[r].printReading()
         }
         
+        textDisplay.text = text
     }
     
     // save sensors in file
@@ -114,6 +150,8 @@ class ViewController: UIViewController {
     
     // read sensors from file
     func readSensors() {
+        
+        self.archivedSensors = []
         
         print("Reading array of sensors from file")
         do{
@@ -150,6 +188,8 @@ class ViewController: UIViewController {
     // read readings from file
     func readReadings() {
         
+        self.archivedReadings = []
+        
         print("Reading array of readings from file")
         
         do{
@@ -169,6 +209,78 @@ class ViewController: UIViewController {
         for r in 0 ... 10 {
             self.archivedReadings[r].printReading()
         }
+        
+    }
+    
+    
+    func findMinAndMaxTimestamp() {
+        
+        var maxTimestamp: Date
+        var minTimestamp: Date
+        
+        minTimestamp = Date.init(timeIntervalSinceNow: 0)
+        maxTimestamp = Date.init(timeIntervalSinceNow: 12000)
+        
+        self.readReadings()
+        
+        for r in self.archivedReadings {
+            if r.date < minTimestamp {
+                minTimestamp = r.date
+            }
+            if r.date > maxTimestamp {
+                maxTimestamp = r.date
+            }
+        }
+        
+        textDisplay.text = "Min timestamp for all readings is \(minTimestamp) \n" + "Max timestamp for all readings is \(maxTimestamp)"
+    }
+    
+    
+    func findAvarageValue() {
+        var avarage: Float = 0
+        
+        self.readReadings()
+        
+        for r in self.archivedReadings {
+            avarage = avarage + r.value
+        }
+        
+        let avg = avarage / Float(self.archivedReadings.count)
+        
+        textDisplay.text = "Avarage value for all sensors is \(avg)"
+    }
+    
+    func findAvarageAndCountForEach() {
+        
+        var textToPrint: String = ""
+        
+        var avarageDictionary: [String:Float] = [:]
+        var countDictionary: [String:Int] = [:]
+        
+        self.readSensors()
+        self.readReadings()
+        
+        for s in self.archivedSensors {
+            avarageDictionary[s.name] = 0.0
+            countDictionary[s.name] = 0
+        }
+        
+        for r in self.archivedReadings {
+            avarageDictionary[r.sensor.name] = avarageDictionary[r.sensor.name]! + r.value
+            countDictionary[r.sensor.name] = countDictionary[r.sensor.name]! + 1
+        }
+        
+        for s in self.archivedSensors {
+            
+            if countDictionary[s.name] != 0 {
+                avarageDictionary[s.name] = avarageDictionary[s.name]! / Float(countDictionary[s.name]!)
+            }
+            
+            textToPrint = textToPrint + "Sensor \(s.name), avarage \(String(describing: avarageDictionary[s.name]!)), count \(String(describing: countDictionary[s.name]!)) \n"
+            
+        }
+        
+        textDisplay.text = textToPrint
         
     }
     

@@ -41,8 +41,9 @@ class Sensor: NSObject, NSCoding{
         coder.encode(self.desc, forKey: "desc")
     }
     
-    func printSensor() {
+    func printSensor() -> String{
         print("Sensor \(name): \(desc)")
+        return "Sensor \(name): \(desc) \n"
     }
     
 }
